@@ -1,0 +1,44 @@
+#!/command/with-contenv bash
+# shellcheck shell=bash
+
+# shellcheck disable=SC1091,SC2086,SC2016
+source /scripts/common
+
+s6wrap=(s6wrap --quiet --prepend="$(basename "$0")" --timestamps --args)
+if chk_enabled $QUIET_FAM; then
+# shellcheck disable=SC1091,SC2086,SC2016
+    "${s6wrap[@]}" s6-setuidgid "$WEBUSER" php /var/www/flightairmap/htdocs/scripts/daemon-spotter.php 2>&1 | \
+            stdbuf -oL awk '! /\\o\//' | \
+            stdbuf -oL awk '! /DATA : /' | \
+            stdbuf -oL awk '! /New flight.../' | \
+            stdbuf -oL awk '! /New aircraft hex/' | \
+            stdbuf -oL awk '! /in archive DB/' | \
+            stdbuf -oL awk '! /already in DB/' | \
+            stdbuf -oL awk '! /Getting schedule info/' | \
+            stdbuf -oL awk '! /old values and update latest data/' | \
+            stdbuf -oL awk '! /Check if aircraft is already in DB/' | \
+            stdbuf -oL awk '! /get arrival\/departure airport/' | \
+            stdbuf -oL awk '! /Deleting Live Spotter/' | \
+            stdbuf -oL awk '! /Calculated Speed/' | \
+            stdbuf -oL awk '! /Calculated Altitude/' | \
+            stdbuf -oL awk '! /Calculated Heading/' | \
+            stdbuf -oL awk '! /Schedule info/' | \
+            stdbuf -oL awk '! /Change departure airport/' | \
+            stdbuf -oL awk '! /Change arrival airport/' | \
+            stdbuf -oL awk '! /Update arrival/' | \
+            stdbuf -oL awk '! /Update departure/' | \
+            stdbuf -oL awk '! /Delete old values/' | \
+            stdbuf -oL awk '! /find arrival airport/' | \
+            stdbuf -oL awk '! /^\n/' | \
+            stdbuf -oL awk '! /^ \n/' | \
+            stdbuf -oL awk '! /^$/' | \
+            stdbuf -oL awk '! /Check Country/' | \
+            stdbuf -oL awk '! /Too much distance in short time/' | \
+            stdbuf -oL awk '! /Time :/' | \
+            stdbuf -oL awk '! /No Airport near/' | \
+            stdbuf -oL sed  -e 's/\n\n/\n/g' | \
+            stdbuf -oL awk '{print $0}'
+else
+# shellcheck disable=SC1091,SC2086,SC2016
+    "${s6wrap[@]}" s6-setuidgid "$WEBUSER" php /var/www/flightairmap/htdocs/scripts/daemon-spotter.php
+fi
